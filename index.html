@@ -6,16 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
-      /* SLB-inspired palette (approx) */
-      --slb-blue-800:#002b7f;
-      --slb-blue-700:#0033a0;
-      --slb-blue-050:#eaf1ff;
-      --ink:#0b1736;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-      --bg:#f8fafc;
-      --ok:#0ea5e9;
-      --warn:#ea580c;
+      --slb-blue-800:#002b7f; --slb-blue-700:#0033a0; --slb-blue-050:#eaf1ff;
+      --muted:#6b7280; --border:#e5e7eb; --bg:#f8fafc; --warn:#ea580c;
       --radius:14px;
     }
     *{box-sizing:border-box}
@@ -25,9 +17,7 @@
     }
     header{
       background:linear-gradient(120deg,var(--slb-blue-800),var(--slb-blue-700));
-      color:#fff; padding:24px 20px;
-      border-bottom:4px solid rgba(255,255,255,.08);
-      position:sticky; top:0; z-index:10;
+      color:#fff; padding:20px 16px; border-bottom:4px solid rgba(255,255,255,.08);
     }
     header .title{font-weight:700; font-size:clamp(22px,3vw,28px); letter-spacing:.2px}
     header .subtitle{opacity:.9; margin-top:4px; font-size:14px}
@@ -38,16 +28,18 @@
     }
     @media (max-width:900px){ .container{ grid-template-columns: 1fr; } }
 
-    /* Left: selector tree */
+    /* Left: selector tree (pretty indented list) */
     .panel{
       background:#fff; border:1px solid var(--border); border-radius:var(--radius);
       box-shadow:0 1px 2px rgba(0,0,0,.04);
     }
     .panel h3{
-      margin:0; padding:14px 14px 8px; font-size:14px; color:var(--muted); font-weight:600;
+      margin:0; padding:12px 14px 6px; font-size:14px; color:var(--muted); font-weight:600;
     }
-    .tree{ padding:6px 10px 14px; }
-    .node{ display:flex; align-items:center; gap:10px; padding:8px 8px; border-radius:10px; }
+    .tree{ padding:6px 10px 12px; }
+
+    /* Nodes */
+    .node{ display:flex; align-items:center; gap:10px; padding:6px 8px; border-radius:10px; }
     .node:hover{ background:var(--slb-blue-050); }
     .node input[type="checkbox"]{ width:18px; height:18px; }
     .node label{ flex:1; cursor:pointer; }
@@ -59,29 +51,39 @@
       border-radius:2px;
     }
     .disabled label{ color:#9ca3af; }
-    .disabled{ opacity:.7 }
-    .small{ font-size:12px; color:var(--muted); margin:6px 10px 0 10px }
+    .disabled{ opacity:.75 }
+    .small{ font-size:12px; color:#475569; margin:6px 10px 10px 10px }
+
+    /* Collapsible groups */
+    .group{ margin:0; padding:0; }
+    .group .children{ display:block; }
+    .group[aria-expanded="false"] .children{ display:none; }
+    .twisty{
+      width:16px; flex:0 0 16px; text-align:center; cursor:pointer; user-select:none;
+      color:#475569; font-size:12px;
+    }
+    .twisty:focus{ outline:2px solid #c7d2fe; border-radius:4px; }
+    .group[aria-expanded="true"] .twisty{ transform:rotate(90deg); }
 
     /* Right: mapping */
     .map-panel{ background:#fff; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden }
-    .map-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid var(--border) }
+    .map-head{ display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid var(--border) }
     .map-head h3{ margin:0; font-size:15px }
     .actions{ display:flex; gap:8px; align-items:center }
     button,.link{
-      border:1px solid var(--slb-blue-700); background:var(--slb-blue-700); color:#fff; padding:10px 12px; border-radius:10px;
-      font-weight:600; cursor:pointer;
+      border:1px solid var(--slb-blue-700); background:var(--slb-blue-700); color:#fff; padding:8px 10px; border-radius:10px;
+      font-weight:600; cursor:pointer; font-size:13px;
     }
     button:disabled{ opacity:.5; cursor:not-allowed; }
-    .link{ background:transparent; color:var(--slb-blue-700) }
+    .link{ background:transparent; color:#0033a0 }
     .table{ width:100%; border-collapse:collapse; }
-    .table th,.table td{ padding:12px 14px; border-bottom:1px solid var(--border); text-align:left; }
-    .table th{ background:#fafafa; font-size:13px; color:var(--muted); }
+    .table th,.table td{ padding:10px 12px; border-bottom:1px solid var(--border); text-align:left; font-size:13px }
+    .table th{ background:#fafafa; color:var(--muted); }
     select{
-      width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#fff;
-      font:inherit;
+      width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:#fff; font:inherit;
     }
-    .hint{ font-size:12px; color:var(--muted); padding:10px 14px }
-    .error{ color:var(--warn); font-size:12px; margin-top:6px }
+    .hint{ font-size:12px; color:var(--muted); padding:8px 12px }
+    .error{ color:#ea580c; font-size:12px; margin-top:6px; padding:0 12px 12px }
 
     .pill{
       display:inline-block; padding:2px 8px; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:11px; font-weight:700;
@@ -89,25 +91,16 @@
     }
 
     /* Log panel */
-    .log{
-      border-top:1px dashed var(--border);
-      background:#fafafa;
-    }
-    .log-head{
-      display:flex; align-items:center; gap:8px; padding:10px 14px; cursor:pointer; user-select:none;
-      font-weight:700; color:#374151;
-    }
-    .log-head .chev{ transition:transform .18s ease; }
+    .log{ border-top:1px dashed var(--border); background:#fafafa; }
+    .log-head{ display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer; user-select:none; font-weight:700; color:#374151; }
+    .chev{ transition:transform .18s ease; }
     .log[aria-expanded="true"] .chev{ transform:rotate(90deg); }
-    .log-body{
-      display:none; padding:0 14px 14px;
-    }
+    .log-body{ display:none; padding:0 12px 12px; }
     .log[aria-expanded="true"] .log-body{ display:block; }
     pre{
-      margin:0; padding:12px; background:#0b1220; color:#e5e7eb; border-radius:10px; overflow:auto;
-      border:1px solid #111827;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-      font-size:12px; line-height:1.5;
+      margin:0; padding:10px; background:#0b1220; color:#e5e7eb; border-radius:10px; overflow:auto; border:1px solid #111827;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:12px; line-height:1.45;
+      max-height:180px;
     }
   </style>
 </head>
@@ -122,8 +115,10 @@
     <section class="panel" aria-label="Field selector">
       <h3>Select fields to map</h3>
       <div id="tree" class="tree"></div>
-      <div class="small">Rules: <span class="pill">Total Capex</span> disables everything else. Any <span class="pill">Total …</span> disables only its own children.</div>
-      <div class="small">You can select multiple totals independently.</div>
+      <div class="small">
+        Rules: <span class="pill">Total Capex</span> disables everything else. Any <span class="pill">Total …</span> disables only its own children.
+        You can select multiple totals independently. Click ▶ to expand children.
+      </div>
     </section>
 
     <!-- Right: mapping table + actions -->
@@ -132,14 +127,14 @@
         <h3>Mappings <span id="selCount" class="pill">0 selected</span></h3>
         <div class="actions">
           <button id="downloadBtn" disabled>Download JSON</button>
-          <button class="link" id="resetBtn" type="button" title="Clear all selections">Reset</button>
+          <button class="link" id="resetBtn" type="button" title="Restore defaults">Reset</button>
         </div>
       </div>
       <table class="table" id="mapTable" role="table" aria-label="Selected fields to map">
         <thead><tr><th style="width:45%">Field</th><th>Category</th></tr></thead>
         <tbody id="mapBody"><tr><td colspan="2" class="hint">Select items on the left to begin.</td></tr></tbody>
       </table>
-      <div id="errors" style="padding:0 14px 12px"></div>
+      <div id="errors" class="error" aria-live="polite"></div>
 
       <!-- Log (collapsed by default) -->
       <div id="log" class="log" aria-expanded="false">
@@ -161,11 +156,20 @@
       "Platforms","Plants and Gathering","Pipelines","Abandonment"
     ];
 
+    // Leaves incl. Gas + WAG variants (kept for safety)
     const LEAVES = [
-      "Water Injection Wells","Water Injection Drilling Centers","FPSO Spread Moored Gathering Units",
-      "Water Injection Flowlines","Water Injection Risers","Water Injection Riser Bases",
-      "Oil Production Wells","Oil Production Drilling Centers","Oil Production Flowlines",
-      "Oil Production Risers","Oil Production Riser Bases"
+      // Wells
+      "Oil Production Wells","Gas Production Wells","Water Injection Wells","Gas Injection Wells","WAG Injection Wells",
+      // Drilling Centers
+      "Oil Production Drilling Centers","Gas Production Drilling Centers","Water Injection Drilling Centers","Gas Injection Drilling Centers","WAG Injection Drilling Centers",
+      // Gathering Units
+      "FPSO Spread Moored Gathering Units",
+      // Flowlines
+      "Oil Production Flowlines","Gas Production Flowlines","Water Injection Flowlines","Gas Injection Flowlines","WAG Injection Flowlines",
+      // Risers
+      "Oil Production Risers","Gas Production Risers","Water Injection Risers","Gas Injection Risers","WAG Injection Risers",
+      // Riser Bases
+      "Oil Production Riser Bases","Gas Production Riser Bases","Water Injection Riser Bases","Gas Injection Riser Bases","WAG Injection Riser Bases"
     ];
 
     const TOTALS_SECOND_LEVEL = [
@@ -173,19 +177,41 @@
       "Total Flowlines","Total Risers","Total Riser Bases","Total Tie-In Points"
     ];
 
-    const ALL_KEYS = ["Total Capex", ...TOTALS_SECOND_LEVEL, ...LEAVES];
-
-    const CHILDREN = {
-      "Total Wells": ["Water Injection Wells","Oil Production Wells"],
-      "Total Drilling Centers": ["Water Injection Drilling Centers","Oil Production Drilling Centers"],
-      "Total Gathering Units": ["FPSO Spread Moored Gathering Units"],
-      "Total Flowlines": ["Water Injection Flowlines","Oil Production Flowlines"],
-      "Total Risers": ["Water Injection Risers","Oil Production Risers"],
-      "Total Riser Bases": ["Water Injection Riser Bases","Oil Production Riser Bases"],
-      "Total Tie-In Points": []
+    // Default PEEP-style category suggestions for totals
+    const DEFAULT_TOTAL_CATEGORY = {
+      "Total Wells": "Dev Drilling Success",
+      "Total Drilling Centers": "Facilities",
+      "Total Gathering Units": "Plants and Gathering",
+      "Total Flowlines": "Pipelines",
+      "Total Risers": "Pipelines",
+      "Total Riser Bases": "Facilities",
+      "Total Tie-In Points": "Facilities"
     };
 
-    const TOTALS = new Set(["Total Capex", ...TOTALS_SECOND_LEVEL]);
+    const ALL_KEYS = ["Total Capex", ...TOTALS_SECOND_LEVEL, ...LEAVES];
+
+    // Map totals → children (unsorted; sorted at render)
+    const CHILDREN = {
+      "Total Wells": [
+        "Oil Production Wells","Gas Production Wells","Water Injection Wells","Gas Injection Wells","WAG Injection Wells"
+      ],
+      "Total Drilling Centers": [
+        "Oil Production Drilling Centers","Gas Production Drilling Centers","Water Injection Drilling Centers","Gas Injection Drilling Centers","WAG Injection Drilling Centers"
+      ],
+      "Total Gathering Units": [
+        "FPSO Spread Moored Gathering Units"
+      ],
+      "Total Flowlines": [
+        "Oil Production Flowlines","Gas Production Flowlines","Water Injection Flowlines","Gas Injection Flowlines","WAG Injection Flowlines"
+      ],
+      "Total Risers": [
+        "Oil Production Risers","Gas Production Risers","Water Injection Risers","Gas Injection Risers","WAG Injection Risers"
+      ],
+      "Total Riser Bases": [
+        "Oil Production Riser Bases","Gas Production Riser Bases","Water Injection Riser Bases","Gas Injection Riser Bases","WAG Injection Riser Bases"
+      ],
+      "Total Tie-In Points": []
+    };
 
     // --- State --------------------------------------------------------------
     const state = {
@@ -201,12 +227,28 @@
     const downloadBtn = document.getElementById("downloadBtn");
     const resetBtn = document.getElementById("resetBtn");
     const selCountEl = document.getElementById("selCount");
-
     const logEl = document.getElementById("log");
     const logHead = document.getElementById("logHead");
     const logPre = document.getElementById("logPre");
 
-    // --- Build tree UI ------------------------------------------------------
+    // --- Helpers ------------------------------------------------------------
+    function kindPriority(name){
+      if(/Oil Production/.test(name)) return 0;
+      if(/Gas Production/.test(name)) return 1;
+      if(/Water Injection/.test(name)) return 2;
+      if(/Gas Injection/.test(name)) return 3;
+      if(/WAG Injection/.test(name)) return 4;
+      return 50;
+    }
+    function sortChildren(list){
+      return [...list].sort((a,b)=>{
+        const da = kindPriority(a), db = kindPriority(b);
+        if(da !== db) return da - db;
+        return a.localeCompare(b);
+      });
+    }
+
+    // --- Build tree UI (with collapsible groups) ---------------------------
     function createNode(key, level){
       const id = `cb-${key.replace(/\s+/g,'-').toLowerCase()}`;
       const wrap = document.createElement("div");
@@ -217,39 +259,75 @@
       cb.type = "checkbox"; cb.id = id; cb.dataset.key = key;
 
       const label = document.createElement("label");
-      label.htmlFor = id; label.textContent = key;
+      label.htmlFor = id; label.textContent = key; label.title = key;
 
       cb.addEventListener("change", () => onToggle(key, cb.checked));
       wrap.append(cb, label);
       return wrap;
     }
 
+    function createGroup(total){
+      const group = document.createElement("div");
+      group.className = "group";
+      group.dataset.total = total;
+      group.setAttribute("aria-expanded","false"); // collapsed by default
+
+      // Header row (lvl-1) with chevron
+      const header = createNode(total, 1);
+      const twisty = document.createElement("span");
+      twisty.className = "twisty";
+      twisty.setAttribute("role","button");
+      twisty.setAttribute("tabindex","0");
+      twisty.setAttribute("aria-label",`Toggle ${total}`);
+      twisty.textContent = "▶";
+      twisty.addEventListener("click", ()=> toggleGroup(group));
+      twisty.addEventListener("keydown", (e)=>{
+        if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleGroup(group); }
+      });
+      header.prepend(twisty); // chevron before checkbox
+      group.append(header);
+
+      // Children container
+      const childrenWrap = document.createElement("div");
+      childrenWrap.className = "children";
+      const kids = sortChildren(CHILDREN[total] || []);
+      for(const leaf of kids){
+        childrenWrap.append(createNode(leaf, 2));
+      }
+      group.append(childrenWrap);
+      return group;
+    }
+
+    function toggleGroup(groupEl){
+      const expanded = groupEl.getAttribute("aria-expanded") === "true";
+      groupEl.setAttribute("aria-expanded", String(!expanded));
+    }
+
     function renderTree(){
       treeEl.innerHTML = "";
 
-      // Level 0: Total Capex
-      const n0 = createNode("Total Capex", 0);
-      treeEl.append(n0);
+      // Level 0: Total Capex (no children)
+      treeEl.append(createNode("Total Capex", 0));
 
-      // Level 1 totals with their level 2 children
+      // Level 1 totals: groups if they have children, otherwise plain node
       for(const total of TOTALS_SECOND_LEVEL){
-        const n1 = createNode(total, 1);
-        treeEl.append(n1);
-
-        for(const leaf of CHILDREN[total]){
-          const n2 = createNode(leaf, 2);
-          treeEl.append(n2);
+        const kids = CHILDREN[total] || [];
+        if(kids.length){
+          treeEl.append(createGroup(total));
+        } else {
+          treeEl.append(createNode(total, 1));
         }
       }
 
-      // Any leaf not covered above (safety)
-      const coveredLeaves = new Set(Object.values(CHILDREN).flat());
-      for(const orphan of LEAVES.filter(k => !coveredLeaves.has(k))){
+      // Any leaf not covered above (safety; not collapsed)
+      const covered = new Set(Object.values(CHILDREN).flat());
+      const orphans = LEAVES.filter(k => !covered.has(k));
+      for(const orphan of sortChildren(orphans)){
         treeEl.append(createNode(orphan, 2));
       }
     }
 
-    // --- Event logic --------------------------------------------------------
+    // --- Logic --------------------------------------------------------------
     function onToggle(key, isChecked){
       if(isChecked){ state.checked.add(key); }
       else{
@@ -263,21 +341,20 @@
 
     function recomputeDisabled(){
       state.disabled.clear();
-
       const totalCapexOn = state.checked.has("Total Capex");
+
       if(totalCapexOn){
-        // Blocks everything else
         for(const k of ALL_KEYS){ if(k!=="Total Capex") state.disabled.add(k); }
       } else {
-        // Blocks only children of checked second-level totals
-        for(const t of TOTALS_SECOND_LEVEL){
+        for(const t of Object.keys(CHILDREN)){
+          if(t === "Total Capex") continue;
           if(state.checked.has(t)){
             for(const child of CHILDREN[t] || []) state.disabled.add(child);
           }
         }
       }
 
-      // Unselect anything that just became disabled
+      // Ensure disabled items are not selected
       for(const k of state.disabled){
         if(state.checked.has(k)){
           state.checked.delete(k);
@@ -286,7 +363,6 @@
       }
     }
 
-    // --- Mapping table ------------------------------------------------------
     function renderMapping(){
       mapBody.innerHTML = "";
       const selected = Array.from(state.checked);
@@ -295,13 +371,17 @@
         mapBody.innerHTML = `<tr><td colspan="2" class="hint">Select items on the left to begin.</td></tr>`;
         downloadBtn.disabled = true;
         selCountEl.textContent = "0 selected";
-        updatePreview(); // keep Log consistent
+        updatePreview();
         return;
       }
 
+      const totals = selected.filter(k => k.startsWith("Total "));
+      const others = selected.filter(k => !k.startsWith("Total "));
+      const ordered = [...totals, ...others];
+
       selCountEl.textContent = `${selected.length} selected`;
 
-      for(const key of selected){
+      for(const key of ordered){
         const tr = document.createElement("tr");
 
         const tdLabel = document.createElement("td");
@@ -312,16 +392,13 @@
         const sel = document.createElement("select");
         sel.dataset.key = key;
         sel.append(new Option("— Select a category —",""));
-        for(const cat of CATEGORIES){
-          sel.append(new Option(cat, cat));
-        }
+        for(const cat of CATEGORIES){ sel.append(new Option(cat, cat)); }
         const current = state.mapping.get(key) || "";
         sel.value = current;
         sel.addEventListener("change", e=>{
           const v = e.target.value;
           if(v) state.mapping.set(key, v); else state.mapping.delete(key);
-          validate();
-          updatePreview(); // reflect change immediately
+          validate(); updatePreview();
         });
         tdSelect.appendChild(sel);
         tr.appendChild(tdSelect);
@@ -336,24 +413,12 @@
     function validate(){
       const selected = Array.from(state.checked);
       const missing = selected.filter(k => !state.mapping.has(k));
-      errorsEl.innerHTML = "";
-
-      if(missing.length){
-        const ul = document.createElement("ul");
-        ul.className = "error";
-        ul.style.paddingLeft = "18px";
-        const li = document.createElement("li");
-        li.textContent = `Choose a category for: ${missing.join(", ")}`;
-        ul.appendChild(li);
-        errorsEl.appendChild(ul);
-      }
-
+      errorsEl.textContent = missing.length ? `Choose a category for: ${missing.join(", ")}` : "";
       downloadBtn.disabled = missing.length > 0 || selected.length === 0;
     }
 
     // --- Log (JSON preview) -------------------------------------------------
     function updatePreview(){
-      // Show null for unmapped selections (why: visibility into pending choices)
       const obj = {};
       for(const k of state.checked){
         obj[k] = state.mapping.has(k) ? state.mapping.get(k) : null;
@@ -365,42 +430,26 @@
       const expanded = logEl.getAttribute("aria-expanded") === "true";
       logEl.setAttribute("aria-expanded", String(!expanded));
     }
-
     logHead.addEventListener("click", toggleLog);
     logHead.addEventListener("keydown", (e)=>{ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleLog(); } });
 
-    // --- Controls -----------------------------------------------------------
+    // --- Actions ------------------------------------------------------------
     downloadBtn.addEventListener("click", ()=>{
       const obj = {};
-      for(const k of state.checked){
-        obj[k] = state.mapping.get(k);
-      }
+      for(const k of state.checked){ obj[k] = state.mapping.get(k); }
       const blob = new Blob([JSON.stringify(obj,null,2)], {type:"application/json"});
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = "cost-mapping.json";
-      document.body.appendChild(a);
-      a.click();
-      URL.revokeObjectURL(a.href);
-      a.remove();
+      document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
     });
 
-    resetBtn.addEventListener("click", ()=>{
-      state.checked.clear();
-      state.disabled.clear();
-      state.mapping.clear();
-      refreshUI();
-      renderMapping();
-      // keep Log minimized and refreshed
-      logEl.setAttribute("aria-expanded","false");
-      updatePreview();
-    });
+    resetBtn.addEventListener("click", initDefaults); // restore defaults
 
-    // --- UI refresh ---------------------------------------------------------
+    // --- UI sync ------------------------------------------------------------
     function refreshUI(){
       const selected = new Set(state.checked);
       const disabled = new Set(state.disabled);
-
       for(const node of treeEl.querySelectorAll(".node")){
         const key = node.dataset.key;
         const cb = node.querySelector("input[type=checkbox]");
@@ -412,11 +461,34 @@
       }
     }
 
+    // --- Defaults -----------------------------------------------------------
+    function initDefaults(){
+      state.checked.clear();
+      state.disabled.clear();
+      state.mapping.clear();
+
+      // Pre-check all second-level totals and set default categories
+      for(const t of TOTALS_SECOND_LEVEL){
+        state.checked.add(t);
+        if(DEFAULT_TOTAL_CATEGORY[t]) state.mapping.set(t, DEFAULT_TOTAL_CATEGORY[t]);
+      }
+
+      recomputeDisabled();
+      refreshUI();
+      renderMapping();
+
+      // Collapse all groups on init/reset
+      for(const g of treeEl.querySelectorAll(".group")){
+        g.setAttribute("aria-expanded","false");
+      }
+
+      logEl.setAttribute("aria-expanded","false");
+      updatePreview();
+    }
+
     // --- Init ---------------------------------------------------------------
     renderTree();
-    recomputeDisabled();
-    refreshUI();
-    updatePreview(); // initialize Log content
+    initDefaults();
   </script>
 </body>
 </html>
