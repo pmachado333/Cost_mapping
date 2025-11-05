@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Cost Mapping Input — Prototype</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      /* SLB-inspired palette (approx) */
+      --slb-blue-800:#002b7f;
+      --slb-blue-700:#0033a0;
+      --slb-blue-050:#eaf1ff;
+      --ink:#0b1736;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --bg:#f8fafc;
+      --ok:#0ea5e9;
+      --warn:#ea580c;
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+      color:#111827; background:var(--bg);
+    }
+    header{
+      background:linear-gradient(120deg,var(--slb-blue-800),var(--slb-blue-700));
+      color:#fff; padding:24px 20px;
+      border-bottom:4px solid rgba(255,255,255,.08);
+      position:sticky; top:0; z-index:10;
+    }
+    header .title{font-weight:700; font-size:clamp(22px,3vw,28px); letter-spacing:.2px}
+    header .subtitle{opacity:.9; margin-top:4px; font-size:14px}
+
+    .container{
+      max-width:1200px; margin:18px auto; padding:0 16px;
+      display:grid; grid-template-columns: 420px 1fr; gap:18px;
+    }
+    @media (max-width:900px){ .container{ grid-template-columns: 1fr; } }
+
+    /* Left: selector tree */
+    .panel{
+      background:#fff; border:1px solid var(--border); border-radius:var(--radius);
+      box-shadow:0 1px 2px rgba(0,0,0,.04);
+    }
+    .panel h3{
+      margin:0; padding:14px 14px 8px; font-size:14px; color:var(--muted); font-weight:600;
+    }
+    .tree{ padding:6px 10px 14px; }
+    .node{ display:flex; align-items:center; gap:10px; padding:8px 8px; border-radius:10px; }
+    .node:hover{ background:var(--slb-blue-050); }
+    .node input[type="checkbox"]{ width:18px; height:18px; }
+    .node label{ flex:1; cursor:pointer; }
+    .lvl-0{ font-weight:800; }
+    .lvl-1{ font-weight:700; padding-left:8px; }
+    .lvl-2{ padding-left:28px; position:relative; }
+    .lvl-2::before{
+      content:""; position:absolute; left:16px; top:0; bottom:0; width:2px; background:var(--border);
+      border-radius:2px;
+    }
+    .disabled label{ color:#9ca3af; }
+    .disabled{ opacity:.7 }
+    .small{ font-size:12px; color:var(--muted); margin:6px 10px 0 10px }
+
+    /* Right: mapping */
+    .map-panel{ background:#fff; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden }
+    .map-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid var(--border) }
+    .map-head h3{ margin:0; font-size:15px }
+    .actions{ display:flex; gap:8px; align-items:center }
+    button,.link{
+      border:1px solid var(--slb-blue-700); background:var(--slb-blue-700); color:#fff; padding:10px 12px; border-radius:10px;
+      font-weight:600; cursor:pointer;
+    }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
+    .link{ background:transparent; color:var(--slb-blue-700) }
+    .table{ width:100%; border-collapse:collapse; }
+    .table th,.table td{ padding:12px 14px; border-bottom:1px solid var(--border); text-align:left; }
+    .table th{ background:#fafafa; font-size:13px; color:var(--muted); }
+    select{
+      width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#fff;
+      font:inherit;
+    }
+    .hint{ font-size:12px; color:var(--muted); padding:10px 14px }
+    .error{ color:var(--warn); font-size:12px; margin-top:6px }
+
+    .pill{
+      display:inline-block; padding:2px 8px; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:11px; font-weight:700;
+      border:1px solid #e5e7eb; vertical-align:middle;
+    }
+
+    /* Log panel */
+    .log{
+      border-top:1px dashed var(--border);
+      background:#fafafa;
+    }
+    .log-head{
+      display:flex; align-items:center; gap:8px; padding:10px 14px; cursor:pointer; user-select:none;
+      font-weight:700; color:#374151;
+    }
+    .log-head .chev{ transition:transform .18s ease; }
+    .log[aria-expanded="true"] .chev{ transform:rotate(90deg); }
+    .log-body{
+      display:none; padding:0 14px 14px;
+    }
+    .log[aria-expanded="true"] .log-body{ display:block; }
+    pre{
+      margin:0; padding:12px; background:#0b1220; color:#e5e7eb; border-radius:10px; overflow:auto;
+      border:1px solid #111827;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size:12px; line-height:1.5;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">Cost Mapping Input</div>
+    <div class="subtitle">Prototype Input page</div>
+  </header>
+
+  <main class="container">
+    <!-- Left: checkbox tree -->
+    <section class="panel" aria-label="Field selector">
+      <h3>Select fields to map</h3>
+      <div id="tree" class="tree"></div>
+      <div class="small">Rules: <span class="pill">Total Capex</span> disables everything else. Any <span class="pill">Total …</span> disables only its own children.</div>
+      <div class="small">You can select multiple totals independently.</div>
+    </section>
+
+    <!-- Right: mapping table + actions -->
+    <section class="map-panel" aria-label="Mapping">
+      <div class="map-head">
+        <h3>Mappings <span id="selCount" class="pill">0 selected</span></h3>
+        <div class="actions">
+          <button id="downloadBtn" disabled>Download JSON</button>
+          <button class="link" id="resetBtn" type="button" title="Clear all selections">Reset</button>
+        </div>
+      </div>
+      <table class="table" id="mapTable" role="table" aria-label="Selected fields to map">
+        <thead><tr><th style="width:45%">Field</th><th>Category</th></tr></thead>
+        <tbody id="mapBody"><tr><td colspan="2" class="hint">Select items on the left to begin.</td></tr></tbody>
+      </table>
+      <div id="errors" style="padding:0 14px 12px"></div>
+
+      <!-- Log (collapsed by default) -->
+      <div id="log" class="log" aria-expanded="false">
+        <div id="logHead" class="log-head" role="button" tabindex="0" aria-controls="logBody">
+          <span class="chev">▶</span> Log
+        </div>
+        <div id="logBody" class="log-body">
+          <pre id="logPre">{}</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // --- Data ---------------------------------------------------------------
+    const CATEGORIES = [
+      "Comp Acquisition","Expl G&A","Expl G&G","Expl Drilling Success","Appr Drilling Success",
+      "Dev G&A","Dev Drilling Success","Facilities","Buildings","Machinery and Equipment",
+      "Platforms","Plants and Gathering","Pipelines","Abandonment"
+    ];
+
+    const LEAVES = [
+      "Water Injection Wells","Water Injection Drilling Centers","FPSO Spread Moored Gathering Units",
+      "Water Injection Flowlines","Water Injection Risers","Water Injection Riser Bases",
+      "Oil Production Wells","Oil Production Drilling Centers","Oil Production Flowlines",
+      "Oil Production Risers","Oil Production Riser Bases"
+    ];
+
+    const TOTALS_SECOND_LEVEL = [
+      "Total Wells","Total Drilling Centers","Total Gathering Units",
+      "Total Flowlines","Total Risers","Total Riser Bases","Total Tie-In Points"
+    ];
+
+    const ALL_KEYS = ["Total Capex", ...TOTALS_SECOND_LEVEL, ...LEAVES];
+
+    const CHILDREN = {
+      "Total Wells": ["Water Injection Wells","Oil Production Wells"],
+      "Total Drilling Centers": ["Water Injection Drilling Centers","Oil Production Drilling Centers"],
+      "Total Gathering Units": ["FPSO Spread Moored Gathering Units"],
+      "Total Flowlines": ["Water Injection Flowlines","Oil Production Flowlines"],
+      "Total Risers": ["Water Injection Risers","Oil Production Risers"],
+      "Total Riser Bases": ["Water Injection Riser Bases","Oil Production Riser Bases"],
+      "Total Tie-In Points": []
+    };
+
+    const TOTALS = new Set(["Total Capex", ...TOTALS_SECOND_LEVEL]);
+
+    // --- State --------------------------------------------------------------
+    const state = {
+      checked: new Set(),
+      disabled: new Set(),
+      mapping: new Map(),
+    };
+
+    // --- DOM refs -----------------------------------------------------------
+    const treeEl = document.getElementById("tree");
+    const mapBody = document.getElementById("mapBody");
+    const errorsEl = document.getElementById("errors");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const selCountEl = document.getElementById("selCount");
+
+    const logEl = document.getElementById("log");
+    const logHead = document.getElementById("logHead");
+    const logPre = document.getElementById("logPre");
+
+    // --- Build tree UI ------------------------------------------------------
+    function createNode(key, level){
+      const id = `cb-${key.replace(/\s+/g,'-').toLowerCase()}`;
+      const wrap = document.createElement("div");
+      wrap.className = `node lvl-${level}`;
+      wrap.dataset.key = key;
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.id = id; cb.dataset.key = key;
+
+      const label = document.createElement("label");
+      label.htmlFor = id; label.textContent = key;
+
+      cb.addEventListener("change", () => onToggle(key, cb.checked));
+      wrap.append(cb, label);
+      return wrap;
+    }
+
+    function renderTree(){
+      treeEl.innerHTML = "";
+
+      // Level 0: Total Capex
+      const n0 = createNode("Total Capex", 0);
+      treeEl.append(n0);
+
+      // Level 1 totals with their level 2 children
+      for(const total of TOTALS_SECOND_LEVEL){
+        const n1 = createNode(total, 1);
+        treeEl.append(n1);
+
+        for(const leaf of CHILDREN[total]){
+          const n2 = createNode(leaf, 2);
+          treeEl.append(n2);
+        }
+      }
+
+      // Any leaf not covered above (safety)
+      const coveredLeaves = new Set(Object.values(CHILDREN).flat());
+      for(const orphan of LEAVES.filter(k => !coveredLeaves.has(k))){
+        treeEl.append(createNode(orphan, 2));
+      }
+    }
+
+    // --- Event logic --------------------------------------------------------
+    function onToggle(key, isChecked){
+      if(isChecked){ state.checked.add(key); }
+      else{
+        state.checked.delete(key);
+        state.mapping.delete(key);
+      }
+      recomputeDisabled();
+      renderMapping();
+      refreshUI();
+    }
+
+    function recomputeDisabled(){
+      state.disabled.clear();
+
+      const totalCapexOn = state.checked.has("Total Capex");
+      if(totalCapexOn){
+        // Blocks everything else
+        for(const k of ALL_KEYS){ if(k!=="Total Capex") state.disabled.add(k); }
+      } else {
+        // Blocks only children of checked second-level totals
+        for(const t of TOTALS_SECOND_LEVEL){
+          if(state.checked.has(t)){
+            for(const child of CHILDREN[t] || []) state.disabled.add(child);
+          }
+        }
+      }
+
+      // Unselect anything that just became disabled
+      for(const k of state.disabled){
+        if(state.checked.has(k)){
+          state.checked.delete(k);
+          state.mapping.delete(k);
+        }
+      }
+    }
+
+    // --- Mapping table ------------------------------------------------------
+    function renderMapping(){
+      mapBody.innerHTML = "";
+      const selected = Array.from(state.checked);
+
+      if(selected.length === 0){
+        mapBody.innerHTML = `<tr><td colspan="2" class="hint">Select items on the left to begin.</td></tr>`;
+        downloadBtn.disabled = true;
+        selCountEl.textContent = "0 selected";
+        updatePreview(); // keep Log consistent
+        return;
+      }
+
+      selCountEl.textContent = `${selected.length} selected`;
+
+      for(const key of selected){
+        const tr = document.createElement("tr");
+
+        const tdLabel = document.createElement("td");
+        tdLabel.textContent = key;
+        tr.appendChild(tdLabel);
+
+        const tdSelect = document.createElement("td");
+        const sel = document.createElement("select");
+        sel.dataset.key = key;
+        sel.append(new Option("— Select a category —",""));
+        for(const cat of CATEGORIES){
+          sel.append(new Option(cat, cat));
+        }
+        const current = state.mapping.get(key) || "";
+        sel.value = current;
+        sel.addEventListener("change", e=>{
+          const v = e.target.value;
+          if(v) state.mapping.set(key, v); else state.mapping.delete(key);
+          validate();
+          updatePreview(); // reflect change immediately
+        });
+        tdSelect.appendChild(sel);
+        tr.appendChild(tdSelect);
+
+        mapBody.appendChild(tr);
+      }
+
+      validate();
+      updatePreview();
+    }
+
+    function validate(){
+      const selected = Array.from(state.checked);
+      const missing = selected.filter(k => !state.mapping.has(k));
+      errorsEl.innerHTML = "";
+
+      if(missing.length){
+        const ul = document.createElement("ul");
+        ul.className = "error";
+        ul.style.paddingLeft = "18px";
+        const li = document.createElement("li");
+        li.textContent = `Choose a category for: ${missing.join(", ")}`;
+        ul.appendChild(li);
+        errorsEl.appendChild(ul);
+      }
+
+      downloadBtn.disabled = missing.length > 0 || selected.length === 0;
+    }
+
+    // --- Log (JSON preview) -------------------------------------------------
+    function updatePreview(){
+      // Show null for unmapped selections (why: visibility into pending choices)
+      const obj = {};
+      for(const k of state.checked){
+        obj[k] = state.mapping.has(k) ? state.mapping.get(k) : null;
+      }
+      logPre.textContent = JSON.stringify(obj, null, 2);
+    }
+
+    function toggleLog(){
+      const expanded = logEl.getAttribute("aria-expanded") === "true";
+      logEl.setAttribute("aria-expanded", String(!expanded));
+    }
+
+    logHead.addEventListener("click", toggleLog);
+    logHead.addEventListener("keydown", (e)=>{ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleLog(); } });
+
+    // --- Controls -----------------------------------------------------------
+    downloadBtn.addEventListener("click", ()=>{
+      const obj = {};
+      for(const k of state.checked){
+        obj[k] = state.mapping.get(k);
+      }
+      const blob = new Blob([JSON.stringify(obj,null,2)], {type:"application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "cost-mapping.json";
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(a.href);
+      a.remove();
+    });
+
+    resetBtn.addEventListener("click", ()=>{
+      state.checked.clear();
+      state.disabled.clear();
+      state.mapping.clear();
+      refreshUI();
+      renderMapping();
+      // keep Log minimized and refreshed
+      logEl.setAttribute("aria-expanded","false");
+      updatePreview();
+    });
+
+    // --- UI refresh ---------------------------------------------------------
+    function refreshUI(){
+      const selected = new Set(state.checked);
+      const disabled = new Set(state.disabled);
+
+      for(const node of treeEl.querySelectorAll(".node")){
+        const key = node.dataset.key;
+        const cb = node.querySelector("input[type=checkbox]");
+        const wasChecked = cb.checked;
+        cb.checked = selected.has(key);
+        cb.disabled = disabled.has(key);
+        node.classList.toggle("disabled", cb.disabled);
+        if(wasChecked && cb.disabled){ cb.checked = false; }
+      }
+    }
+
+    // --- Init ---------------------------------------------------------------
+    renderTree();
+    recomputeDisabled();
+    refreshUI();
+    updatePreview(); // initialize Log content
+  </script>
+</body>
+</html>
